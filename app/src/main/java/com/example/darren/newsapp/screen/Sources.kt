@@ -26,11 +26,15 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.example.darren.newsapp.MainViewModel
 import com.example.darren.newsapp.R
+import com.example.darren.newsapp.component.ErrorUI
+import com.example.darren.newsapp.component.LoadingUI
 import com.example.darren.newsapp.models.TopNewsArticle
 import com.example.darren.newsapp.network.NewsManager
 
 @Composable
-fun Sources(viewModel: MainViewModel){
+fun Sources(viewModel: MainViewModel,
+            isLoading: MutableState<Boolean>,
+            isError: MutableState<Boolean>){
     val items = listOf(
         "TechCrunch" to "techcrunch",
         "TalkSport" to "talksport",
@@ -75,9 +79,18 @@ fun Sources(viewModel: MainViewModel){
         )
     }
     ) {
-        viewModel.getArticlesBySource()
-        val getArticlesBySourceResponse = viewModel.getArticleBySource.collectAsState().value
-        SourceContent(articles = getArticlesBySourceResponse.articles?: listOf())
+        when{
+            isLoading.value ->{
+                LoadingUI()
+            }
+            isError.value ->{
+                ErrorUI()
+            } else -> {
+                viewModel.getArticlesBySource()
+                val getArticlesBySourceResponse = viewModel.getArticleBySource.collectAsState().value
+                SourceContent(articles = getArticlesBySourceResponse.articles?: listOf())
+            }
+        }
     }
 }
 

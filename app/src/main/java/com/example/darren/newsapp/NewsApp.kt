@@ -10,10 +10,7 @@ import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Card
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
@@ -69,6 +66,8 @@ fun Navigation(navController: NavHostController,
                paddingValues: PaddingValues,
                viewModel: MainViewModel
 ){
+    val loading by viewModel.isLoading.collectAsState()
+    val error by viewModel.isError.collectAsState()
     val articles = mutableListOf<TopNewsArticle>()
     val topArticles = viewModel.newsResponse.collectAsState().value.articles
     articles.addAll(topArticles?: listOf())
@@ -80,8 +79,10 @@ fun Navigation(navController: NavHostController,
             startDestination = BottomMenuScreen.TopNews.route,
             modifier = Modifier.padding(paddingValues = paddingValues)
         ){
+            val isLoading = mutableStateOf(loading)
+            val isError = mutableStateOf(error)
             val queryState = mutableStateOf(viewModel.query.value)
-            bottomNavigation(navController, articles, queryState, viewModel)
+            bottomNavigation(navController, articles, queryState, viewModel, isError = isError, isLoading = isLoading)
             composable("Detail/{index}",
                 arguments = listOf(navArgument("index"){type = NavType.IntType})
             ){
@@ -110,25 +111,34 @@ fun Navigation(navController: NavHostController,
 fun NavGraphBuilder.bottomNavigation(navController: NavHostController,
                                      articles: List<TopNewsArticle>,
                                      query: MutableState<String>,
-                                     viewModel: MainViewModel
+                                     viewModel: MainViewModel,
+                                     isLoading: MutableState<Boolean>,
+                                     isError: MutableState<Boolean>
 ){
     composable(BottomMenuScreen.TopNews.route){
         TopNews(navController = navController,
             articles,
             query = query,
-            viewModel = viewModel
+            viewModel = viewModel,
+            isLoading = isLoading,
+            isError = isError
             )
     }
     composable(BottomMenuScreen.Categories.route){
         viewModel.getArticlesByCategory("business")
         viewModel.onSelectedCategoryChanged("business")
 
-        Categories(viewModel = viewModel, onFetchCategory = {
+        Categories(viewModel = viewModel,
+            onFetchCategory = {
             viewModel.onSelectedCategoryChanged(it)
-            viewModel.getArticlesByCategory(it)
-        })
+            viewModel.getArticlesByCategory(it) },
+            isLoading = isLoading,
+            isError = isError
+            )
     }
     composable(BottomMenuScreen.Sources.route){
-        Sources(viewModel = viewModel)
+        Sources(viewModel = viewModel,
+            isLoading = isLoading,
+            isError = isError)
     }
 }

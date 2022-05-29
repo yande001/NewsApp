@@ -28,6 +28,8 @@ import com.example.darren.newsapp.MockData
 import com.example.darren.newsapp.MockData.getTimeAgo
 import com.example.darren.newsapp.NewsData
 import com.example.darren.newsapp.R
+import com.example.darren.newsapp.component.ErrorUI
+import com.example.darren.newsapp.component.LoadingUI
 import com.example.darren.newsapp.component.SearchBar
 import com.example.darren.newsapp.models.TopNewsArticle
 import com.example.darren.newsapp.network.NewsManager
@@ -37,7 +39,9 @@ import com.skydoves.landscapist.coil.CoilImage
 fun TopNews(navController: NavController,
             articles: List<TopNewsArticle>,
             query: MutableState<String>,
-            viewModel: MainViewModel
+            viewModel: MainViewModel,
+            isError: MutableState<Boolean>,
+            isLoading: MutableState<Boolean>
             ){
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         SearchBar(query = query, viewModel = viewModel)
@@ -50,17 +54,29 @@ fun TopNews(navController: NavController,
             resultList.addAll(articles)
             Log.e("TEST","2, ${resultList.size}")
         }
-        LazyColumn{
-            items(resultList.size){
-                index ->
-                TopNewsItems(
-                    article = resultList[index],
-                    onNewsClick = {
-                        navController.navigate("Detail/$index")
+
+        when{
+            isLoading.value ->{
+                LoadingUI()
+            }
+            isError.value ->{
+                ErrorUI()
+            } else ->{
+                LazyColumn{
+                    items(resultList.size){
+                            index ->
+                        TopNewsItems(
+                            article = resultList[index],
+                            onNewsClick = {
+                                navController.navigate("Detail/$index")
+                            }
+                        )
                     }
-                )
+                }
             }
         }
+
+
     }
 }
 

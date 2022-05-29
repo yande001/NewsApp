@@ -11,6 +11,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,25 +26,41 @@ import com.example.darren.newsapp.MockData
 import com.example.darren.newsapp.MockData.getTimeAgo
 import com.example.darren.newsapp.NewsData
 import com.example.darren.newsapp.R
+import com.example.darren.newsapp.component.ErrorUI
+import com.example.darren.newsapp.component.LoadingUI
 import com.example.darren.newsapp.models.TopNewsArticle
 import com.example.darren.newsapp.models.getAllArticleCategory
 import com.example.darren.newsapp.network.NewsManager
 import com.skydoves.landscapist.coil.CoilImage
 
 @Composable
-fun Categories(onFetchCategory: (String) -> Unit ={}, viewModel: MainViewModel){
+fun Categories(onFetchCategory: (String) -> Unit ={},
+               viewModel: MainViewModel,
+                isLoading: MutableState<Boolean>,
+               isError: MutableState<Boolean>
+               ){
     val tabsItems = getAllArticleCategory()
-    Column() {
-        LazyRow{
-            items(tabsItems.size){
-                val category = tabsItems[it]
-                CategoryTab(category = category.categoryName,
-                    onFetchCategory = onFetchCategory,
-                    isSelected = viewModel.selectedCategory.collectAsState().value == category
-                    )
+    Column {
+        when{
+            isLoading.value ->{
+                LoadingUI()
+            }
+            isError.value ->{
+                ErrorUI()
+            } else ->{
+                LazyRow{
+                    items(tabsItems.size){
+                        val category = tabsItems[it]
+                        CategoryTab(category = category.categoryName,
+                            onFetchCategory = onFetchCategory,
+                            isSelected = viewModel.selectedCategory.collectAsState().value == category
+                        )
+                    }
+                }
+                CategoryContent(articles = viewModel.getArticleByCategory.collectAsState().value.articles?: listOf())
             }
         }
-        CategoryContent(articles = viewModel.getArticleByCategory.collectAsState().value.articles?: listOf())
+
     }
 }
 
