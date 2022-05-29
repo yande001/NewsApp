@@ -58,7 +58,9 @@ fun Navigation(navController: NavHostController,
                newsManager: NewsManager = NewsManager(),
                paddingValues: PaddingValues
 ){
-    val articles = newsManager.newsResponse.value.articles
+    val articles = mutableListOf<TopNewsArticle>()
+    articles.addAll(newsManager.newsResponse.value.articles?: listOf())
+
     Log.d("news","$articles")
 
     articles?.let {
@@ -74,6 +76,14 @@ fun Navigation(navController: NavHostController,
                     navBackStackEntry ->
                 val index = navBackStackEntry.arguments?.getInt("index")
                 index?.let {
+                    if(newsManager.query.value.isNotEmpty()){
+                        articles.clear()
+                        articles.addAll(newsManager.searchNewsResponse.value.articles?: listOf())
+                    } else{
+                        articles.clear()
+                        articles.addAll(newsManager.newsResponse.value.articles?: listOf())
+                    }
+
                     val article = articles[index]
                     DetailScreen(navController = navController, article, scrollState)
                 }
@@ -90,7 +100,11 @@ fun NavGraphBuilder.bottomNavigation(navController: NavHostController,
                                      newsManager: NewsManager
 ){
     composable(BottomMenuScreen.TopNews.route){
-        TopNews(navController = navController, articles)
+        TopNews(navController = navController,
+            articles,
+            newsManager = newsManager,
+            query = newsManager.query
+            )
     }
     composable(BottomMenuScreen.Categories.route){
         newsManager.getArticlesByCategory("business")
@@ -106,62 +120,3 @@ fun NavGraphBuilder.bottomNavigation(navController: NavHostController,
     }
 }
 
-@Composable
-fun SourceContent(articles: List<TopNewsArticle>){
-    val uriHandler = LocalUriHandler.current
-
-    LazyColumn{
-        items(articles){
-            article ->
-            val annotatedString = buildAnnotatedString {
-                pushStringAnnotation(
-                    tag = "URL",
-                    annotation = article.url ?: "newsapi.org"
-                )
-                withStyle(style = SpanStyle(
-                    color = colorResource(id = R.color.purple_500),
-                    textDecoration = TextDecoration.Underline)
-                    )
-                {
-                    append("Read Full Article Here")
-                }
-            }
-            Card(
-                backgroundColor = colorResource(id = R.color.purple_700),
-                elevation = 6.dp,
-                modifier = Modifier.padding(8.dp)
-                ) {
-                Column(modifier = Modifier
-                    .height(200.dp)
-                    .padding(end = 8.dp, start = 8.dp),
-                    verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                    Text(
-                        text = article.title?: "Not Available",
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                        )
-                    Text(
-                        text = article.description?: "Not Available",
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis)
-                    Card(backgroundColor = Color.White, elevation = 6.dp) {
-                        ClickableText(text = annotatedString, onClick = {
-                            annotatedString.getStringAnnotations(it,it).firstOrNull()?.let {
-                                result ->
-                                if(result.tag == "URL"){
-                                    uriHandler.openUri(result.item)
-                                }
-                            }
-                        })
-                    }
-                    
-                }
-                
-            }
-            
-
-        }
-    }
-}

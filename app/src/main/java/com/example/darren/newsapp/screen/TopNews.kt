@@ -1,5 +1,6 @@
 package com.example.darren.newsapp.screen
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,18 +26,33 @@ import com.example.darren.newsapp.MockData
 import com.example.darren.newsapp.MockData.getTimeAgo
 import com.example.darren.newsapp.NewsData
 import com.example.darren.newsapp.R
+import com.example.darren.newsapp.component.SearchBar
 import com.example.darren.newsapp.models.TopNewsArticle
+import com.example.darren.newsapp.network.NewsManager
 import com.skydoves.landscapist.coil.CoilImage
 
 @Composable
-fun TopNews(navController: NavController, articles: List<TopNewsArticle>){
+fun TopNews(navController: NavController,
+            articles: List<TopNewsArticle>,
+            query: MutableState<String>,
+            newsManager: NewsManager
+            ){
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = "Top News", fontWeight = FontWeight.SemiBold)
+        SearchBar(query = query, newsManager = newsManager)
+        val searchedText = query.value
+        val resultList = mutableListOf<TopNewsArticle>()
+        if (searchedText != ""){
+            resultList.addAll(newsManager.searchNewsResponse.value.articles?: articles)
+            Log.e("TEST","1")
+        } else{
+            resultList.addAll(articles)
+            Log.e("TEST","2, ${resultList.size}")
+        }
         LazyColumn{
-            items(articles.size){
+            items(resultList.size){
                 index ->
                 TopNewsItems(
-                    article = articles[index],
+                    article = resultList[index],
                     onNewsClick = {
                         navController.navigate("Detail/$index")
                     }
@@ -66,17 +83,24 @@ fun TopNewsItems(article: TopNewsArticle, onNewsClick:() -> Unit ={} ){
             .padding(top = 16.dp, start = 16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = MockData.stringToDate(article.publishedAt!!).getTimeAgo(),
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold
+            article.publishedAt?.let {
+                Text(
+                    text = MockData.stringToDate(it).getTimeAgo(),
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold
                 )
+            }
+
             Spacer(modifier = Modifier.height(80.dp))
-            Text(
-                text = article.title!!,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold
+
+            article.title?.let {
+                Text(
+                    text = it,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold
                 )
+            }
+
 
         }
     }
