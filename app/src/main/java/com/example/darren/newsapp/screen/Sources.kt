@@ -24,12 +24,13 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.example.darren.newsapp.MainViewModel
 import com.example.darren.newsapp.R
 import com.example.darren.newsapp.models.TopNewsArticle
 import com.example.darren.newsapp.network.NewsManager
 
 @Composable
-fun Sources(newsManager: NewsManager){
+fun Sources(viewModel: MainViewModel){
     val items = listOf(
         "TechCrunch" to "techcrunch",
         "TalkSport" to "talksport",
@@ -42,7 +43,7 @@ fun Sources(newsManager: NewsManager){
 
     Scaffold(topBar = {
         TopAppBar(
-            title = { Text(text = "${newsManager.sourceName.value} Source" )},
+            title = { Text(text = "${viewModel.sourceName.collectAsState().value} Source" )},
             actions = {
                 var menuExpanded by remember { mutableStateOf(false) }
                 IconButton(onClick = { menuExpanded = true }) {
@@ -56,7 +57,8 @@ fun Sources(newsManager: NewsManager){
                         onDismissRequest = { menuExpanded = false}) {
                         items.forEach{
                             DropdownMenuItem(onClick = {
-                                newsManager.sourceName.value =it.second
+                                viewModel.sourceName.value =it.second
+                                viewModel.getArticleBySource
                                 menuExpanded = false
                             }) {
                                 Text(text = it.first)
@@ -73,8 +75,8 @@ fun Sources(newsManager: NewsManager){
         )
     }
     ) {
-        newsManager.getArticlesBySource()
-        val getArticlesBySourceResponse = newsManager.getArticleBySource.value
+        viewModel.getArticlesBySource()
+        val getArticlesBySourceResponse = viewModel.getArticleBySource.collectAsState().value
         SourceContent(articles = getArticlesBySourceResponse.articles?: listOf())
     }
 }
@@ -131,12 +133,8 @@ fun SourceContent(articles: List<TopNewsArticle>){
                         modifier = Modifier.padding(8.dp)
                             )
                     }
-
                 }
-
             }
-
-
         }
     }
 }

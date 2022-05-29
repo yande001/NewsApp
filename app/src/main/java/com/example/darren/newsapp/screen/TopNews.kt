@@ -10,6 +10,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,6 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.darren.newsapp.MainViewModel
 import com.example.darren.newsapp.MockData
 import com.example.darren.newsapp.MockData.getTimeAgo
 import com.example.darren.newsapp.NewsData
@@ -35,14 +37,14 @@ import com.skydoves.landscapist.coil.CoilImage
 fun TopNews(navController: NavController,
             articles: List<TopNewsArticle>,
             query: MutableState<String>,
-            newsManager: NewsManager
+            viewModel: MainViewModel
             ){
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        SearchBar(query = query, newsManager = newsManager)
+        SearchBar(query = query, viewModel = viewModel)
         val searchedText = query.value
         val resultList = mutableListOf<TopNewsArticle>()
         if (searchedText != ""){
-            resultList.addAll(newsManager.searchNewsResponse.value.articles?: articles)
+            resultList.addAll(viewModel.getArticleByQuery.collectAsState().value.articles?: articles)
             Log.e("TEST","1")
         } else{
             resultList.addAll(articles)
